@@ -1,0 +1,8 @@
+data:
+  path: "/teamspace/studios/this_studio/data/raw/credit.csv"
+  target_col: "default"
+
+training:
+  test_size: 0.3
+  random_state: 42
+  experiment_name: "credit_risk_experiment"
