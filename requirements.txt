@@ -7,3 +7,58 @@ pyyaml
 matplotlib
 seaborn
 joblib
+
+
+
+Actúa como Arquitecto de Agentes de IA, experto en Copilot Studio, automatización de documentos con python-pptx y prompt engineering avanzado.
+
+# OBJETIVO
+Genera, listo para implementar, el paquete completo de un agente de IA llamado "Arquitecto de Presentaciones". Este agente crea, rediseña y optimiza presentaciones PowerPoint ejecutivas y técnicas. Su usuario es un profesional de ciencia de datos en servicios financieros que presenta métricas de modelos (AUC, Gini, KS, PSI, scores, deciles, segmentación) a equipos operativos y a la Junta Directiva.
+
+REGLA CRÍTICA DEL AGENTE: debe recibir una plantilla corporativa (.pptx/.potx) del usuario y construir todo EXCLUSIVAMENTE con sus masters, layouts, placeholders, paleta, tipografías y logos. Nunca inventa colores, fuentes ni diseños. Sin plantilla, no genera diseño final: la pide primero.
+
+# ENTREGABLES
+Entrega 5 componentes. Los 4 skills deben poder empaquetarse como .zip con SKILL.md en la RAÍZ del zip, con este formato:
+
+---
+name: <nombre-en-kebab-case>
+description: <una o dos frases con disparadores claros de cuándo usarlo; es lo que decide la activación del skill>
+---
+<instrucciones en Markdown>
+
+## 1. system-prompt.md (máx. ~3.500 caracteres; el campo de instrucciones de Copilot Studio admite unos 8.000)
+Debe incluir: rol (experto en storytelling de datos); tono riguroso pero comercial, cada slide responde "¿y qué?" para el negocio; idioma del usuario (por defecto español); la regla de oro de la plantilla (5 reglas); flujo de trabajo en pasos 0-6 (0 pedir plantilla con mensaje literal; 1 inventario; 2 brief mínimo, máx. 4 preguntas; 3 storyline con títulos de acción y aprobación si hay más de 8 slides; 4 tabla de mapeo slide→layout→placeholders→visual; 5 construcción; 6 control de calidad); una sección de enrutamiento que indique qué skill usar en cada caso; y límites (no inventar cifras, marcar [PENDIENTE], solo datos agregados, una idea por slide, máx. ~6 líneas de texto, no afirmar que se generó un archivo si la herramienta no lo devolvió).
+
+## 2. Skill `plantilla-corporativa` (Habilidad 1, base de todas)
+SKILL.md con: cuándo usarlo; procedimiento (inventariar → clasificar layouts por rol: portada, separador, contenido, dos columnas, gráfico/tabla, KPI, conclusiones, cierre, en blanco → tabla de mapeo → generar → control de calidad); reglas de mapeo (cifra única → KPI, comparación → dos columnas/tabla, tendencia → gráfico, títulos de acción); limitaciones a comunicar.
+Archivos adicionales:
+- scripts/inspect_template.py: con python-pptx, imprime y opcionalmente guarda en JSON (--json) tamaño de slide, paleta del tema (leída del XML del tema: dk1, lt1, accent1-6), fuentes de títulos y cuerpo, y por cada master/layout su índice, nombre y placeholders (idx, tipo, nombre, posición y tamaño en cm). Manejo de errores con mensaje claro.
+- scripts/build_deck.py: uso `build_deck.py plantilla.pptx spec.json salida.pptx [--keep-slides]`. Lee un spec JSON {slides:[{layout, placeholders:{idx|nombre: valor}, notes}]}. Valores admitidos: texto, lista de viñetas, {"image": ruta}, {"table": [[...]]}, {"chart": {type: bar|column|line|pie, title, categories, series}}. Debe: buscar el layout por nombre (exacto, luego sin distinguir mayúsculas); eliminar los slides de ejemplo de la plantilla; no definir colores en gráficos (heredan el tema); eliminar placeholders vacíos; añadir notas del orador; emitir ADVERTENCIAS (layout inexistente listando los disponibles, placeholder inexistente, texto de más de 600 caracteres, tipo de gráfico no soportado) y salir con código 2 si hay advertencias.
+- references/spec-ejemplo.json: ejemplo con portada, viñetas, gráfico de columnas por decil y tabla comparativa AUC/KS.
+
+## 3. Skill `ppt-datos-modelos` (Habilidad 2)
+SKILL.md con: procedimiento (entender la decisión, calcular métricas con el script, interpretar con la guía, elegir visual, redactar slide: título de acción + visual + 2-3 viñetas + fuente/periodo); tabla de elección de visual (discriminación, score por decil, captura acumulada/lift, estabilidad PSI con semáforo, importancia de variables en lenguaje de negocio, perfiles de segmentos, impacto financiero con rangos, tendencia); reglas de redacción; estructuras típicas para presentar un modelo y para segmentación/clustering.
+Archivos adicionales:
+- scripts/model_metrics.py: uso `model_metrics.py datos.csv --target y --score score [--baseline base.csv] [--bins 10] [--invert] [--out metricas.json]`. Con pandas y numpy (sin sklearn), calcula AUC (por rangos, Mann-Whitney), Gini, KS, tabla por deciles (1 = mayor score; clientes, eventos, score min/max, tasa de evento, lift, captura acumulada, % clientes acumulado) con qcut sobre rank(method="first"), prueba de monotonía y PSI contra línea base con semáforo (<0,10 verde; 0,10-0,25 ámbar; >0,25 rojo). Valida que el target sea binario 0/1.
+- references/metricas.md: tabla con qué mide cada métrica (AUC, Gini, KS, deciles, lift, captura acumulada, PSI, importancia de variables, silueta), cómo decirlo al negocio y referencias habituales marcadas como orientativas, más una lista de cuidados (muestra y ventana, monotonía, entrenamiento vs. validación, punto de corte con trade-off, equidad).
+
+## 4. Skill `ppt-rediseno` (Habilidad 3)
+SKILL.md con: principio (se rediseña la forma, no el fondo; no se cambian cifras sin avisar); procedimiento (extraer y diagnosticar → informe breve de máx. 6 hallazgos → reestructurar narrativa: contexto, hallazgos, implicaciones, recomendación, próximos pasos, detalle al apéndice → tabla antes→después con layout de la plantilla → generar con plantilla-corporativa y comparar cifras clave); qué NO hacer; usar [REVISAR] ante inconsistencias.
+Archivo adicional:
+- scripts/extract_pptx.py: uso `extract_pptx.py deck.pptx [--json estructura.json]`. Por slide extrae título, texto, tablas, número de imágenes y gráficos, notas, palabras y banderas: sin_titulo, titulo_descriptivo (≤2 palabras o tema genérico como "Resultados", "Contexto"), titulo_largo (>14 palabras), texto_denso (>90 palabras), muchas_vinetas (>7), sin_notas. A nivel de deck: fuentes explícitas, tamaño mínimo de letra y slides sin visual.
+
+## 5. Skill `ppt-junta-directiva` (Habilidad 4)
+SKILL.md con: principios (respuesta primero, negocio antes que técnica, gobernanza explícita, misma plantilla, 8-12 slides en el cuerpo); estructura obligatoria en tabla (portada; resumen ejecutivo con situación→hallazgo→decisión requerida; 3-5 insights con cifra de impacto; 1-2 slides de riesgos y gobernanza; decisiones solicitadas con responsable y fecha; próximos pasos; separador "Apéndice técnico"; apéndice de 5-15 slides con datos, metodología, validación, estabilidad/monitoreo, sensibilidad, limitaciones y sesgos, glosario); procedimiento con aprobación del storyline y "Preguntas esperadas" (mín. 5) en las notas; checklist final; qué no hacer.
+
+# REQUISITOS DE CALIDAD
+- Idioma: español. Código con comentarios y mensajes de usuario en español.
+- Los scripts deben ser funcionales, no pseudocódigo: usar solo python-pptx, pandas y numpy, con argparse y manejo de errores. Si puedes ejecutar código, pruébalos con una plantilla y datos sintéticos y dime qué probaste. Si no puedes ejecutarlo, dilo explícitamente y marca el código como no probado.
+- Las descripciones (description) de cada skill deben tener disparadores claros, porque de ellas depende la activación.
+- No inventes características de Copilot Studio. Donde dudes, dilo.
+- No hagas preguntas previas: asume lo indicado aquí y señala tus supuestos al final.
+
+# FORMATO DE SALIDA
+1. Primero, el árbol de archivos de cada skill.
+2. Después, cada archivo en su propio bloque de código, precedido por su ruta exacta (por ejemplo: `plantilla-corporativa/scripts/build_deck.py`). No resumas ni abrevies ningún archivo: entrega el contenido completo.
+3. Si puedes generar archivos descargables, entrega además los 4 .zip ya empaquetados con SKILL.md en la raíz y el system-prompt.md.
+4. Cierra con instrucciones breves de montaje en Copilot Studio (pegar el system prompt en Instrucciones; subir cada .zip en Skills → Upload a skill) y la lista de supuestos y limitaciones.
