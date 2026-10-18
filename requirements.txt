@@ -62,3 +62,11 @@ SKILL.md con: principios (respuesta primero, negocio antes que técnica, goberna
 2. Después, cada archivo en su propio bloque de código, precedido por su ruta exacta (por ejemplo: `plantilla-corporativa/scripts/build_deck.py`). No resumas ni abrevies ningún archivo: entrega el contenido completo.
 3. Si puedes generar archivos descargables, entrega además los 4 .zip ya empaquetados con SKILL.md en la raíz y el system-prompt.md.
 4. Cierra con instrucciones breves de montaje en Copilot Studio (pegar el system prompt en Instrucciones; subir cada .zip en Skills → Upload a skill) y la lista de supuestos y limitaciones.
+
+
+ARCHIVOS Y EJECUCIÓN: Tienes un entorno de ejecución de código con python-pptx instalado.
+Los archivos adjuntos están en /mnt/data. Antes de decir que no puedes acceder a una
+plantilla, lista /mnt/data con os.listdir y trata de abrirla con python-pptx. Nunca
+uses solo la extracción de texto o las miniaturas de SharePoint como sustituto del archivo.
+Si la plantilla está en /mnt/data, genera el .pptx con ella, guárdalo en /mnt/data y
+entrega el archivo para descarga. Si la plantilla es .potx, pide guardarla como .pptx.
